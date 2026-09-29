@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="nb">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ferieplanlegger</title>
+    <style>
+        :root {
+            --bg: #f6f7f9;
+            --card: #fff;
+            --text: #1d2330;
+            --muted: #6b7386;
+            --line: #e3e6ec;
+            --holiday: #d64545;
+            --hs: #fbcfe0;
+            --school: #dbeafe;
+            --school-text: #1e4fa3;
+            --weekend: #f0f1f4;
+            --p1: #2f9e6b;
+            --p2: #e08a1e;
+            --p3: #8b5cf6;
+            --p4: #db2777;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #14171d;
+                --card: #1c2029;
+                --text: #e7eaf0;
+                --muted: #98a0b3;
+                --line: #2b3140;
+                --holiday: #ff7a7a;
+                --hs: #5a2a45;
+                --school: #1d3557;
+                --school-text: #9cc2ff;
+                --weekend: #232835;
+                --p1: #4cc38a;
+                --p2: #f0a648;
+                --p3: #a78bfa;
+                --p4: #f472b6;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font: 14px/1.4 system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .ctl {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .year {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button,
+        select,
+        input {
+            font: inherit;
+            color: var(--text);
+        }
+
+        select,
+        .year button,
+        .btn {
+            padding: 6px 12px;
+            border: 1px solid var(--line);
+            background: var(--card);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .persons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .person {
+            border: 2px solid var(--line);
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .person.active {
+            border-color: var(--c);
+        }
+
+        .person .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .person .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--c);
+            flex: none;
+        }
+
+        .person input,
+        .set input {
+            background: transparent;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 4px 6px;
+        }
+
+        .person input[type=text] {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .person input[type=number] {
+            width: 4.5em;
+        }
+
+        .person .rm {
+            border: 0;
+            background: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0 2px;
+        }
+
+        .bar {
+            height: 8px;
+            background: var(--weekend);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar i {
+            display: block;
+            height: 100%;
+            background: var(--c);
+        }
+
+        .bar.over i {
+            background: var(--holiday);
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .stat b {
+            color: var(--text);
+        }
+
+        .addrow {
+            margin-top: 10px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .legend span::before {
+            content: "";
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: -2px;
+            background: var(--k);
+            border: 1px solid var(--line);
+        }
+
+        .legend span.dotk::before {
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            vertical-align: 0;
+        }
+
+        .months {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .month h3 {
+            margin: 0 0 6px;
+            font-size: 14px;
+            text-transform: capitalize;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        th {
+            font-weight: 500;
+            color: var(--muted);
+            font-size: 11px;
+            padding: 2px 0;
+        }
+
+        td {
+            padding: 1px;
+            text-align: center;
+        }
+
+        td.wk {
+            color: var(--muted);
+            font-size: 10px;
+            width: 22px;
+        }
+
+        .d {
+            position: relative;
+            height: 30px;
+            line-height: 30px;
+            border-radius: 6px;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        .d.we {
+            background: var(--weekend);
+            color: var(--muted);
+        }
+
+        .d.school {
+            background: var(--school);
+            color: var(--school-text);
+        }
+
+        .d.hol {
+            color: var(--holiday);
+            font-weight: 700;
+        }
+
+        .d.hol.hs {
+            background: var(--hs);
+        }
+
+        .d.free {
+            cursor: pointer;
+        }
+
+        .d.free:hover {
+            outline: 2px solid var(--muted);
+        }
+
+        .d.today {
+            box-shadow: inset 0 0 0 2px var(--text);
+        }
+
+        .d.pm {
+            color: #fff;
+        }
+
+        .d.allfree::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 1px var(--card);
+        }
+
+        .sum {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .sum h4 {
+            margin: 0 0 6px;
+            font-size: 13px;
+        }
+
+        .sum ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .sum li {
+            padding: 2px 0;
+        }
+
+        .sum li b {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .note {
+            color: var(--muted);
+            font-size: 12px;
+            margin: 8px 0;
+        }
+
+        .note.warn {
+            color: var(--holiday);
+        }
+
+        button.link {
+            background: none;
+            border: 0;
+            color: var(--muted);
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        details summary {
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .set {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .set label {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .set input[type=number] {
+            width: 100%;
+        }
+
+        .calc,
+        .custom {
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .calc ul,
+        .custom ul {
+            list-style: none;
+            padding: 0;
+            margin: 6px 0;
+            columns: 2 220px;
+        }
+
+        .calc li,
+        .custom li {
+            padding: 2px 0;
+        }
+    .print-only { display: none; }
+        .tools { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+        .pstat { font-weight: 400; color: var(--muted); }
+                @page { size: A4 landscape; margin: 8mm; }
+        @media print {
+            :root { --bg:#fff; --card:#fff; --text:#000; --muted:#555; --line:#bbb; --holiday:#c62828; --hs:#fbcfe0; --school:#dbeafe; --school-text:#1e4fa3; --weekend:#eee; --p1:#2f9e6b; --p2:#e08a1e; --p3:#8b5cf6; --p4:#db2777; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: #fff; font-size: 9pt; }
+            main { max-width: none; padding: 0; }
+            header, #fylkeNote, #settings, .noprint, #top .persons, #top .addrow, #top .note { display: none !important; }
+            .print-only { display: block; }
+            #printTitle { font-size: 14pt; font-weight: 700; margin-bottom: 1mm; }
+            #top { border: 0; padding: 0; margin: 0 0 3mm; }
+            #top .legend { margin-top: 0; font-size: 8pt; gap: 8px 12px; }
+            .months { grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+            .month { padding: 1.5mm 2mm; margin: 0; border-radius: 2mm; break-inside: avoid; }
+            .month h3 { margin: 0 0 1mm; font-size: 9pt; }
+            th { font-size: 6pt; padding: 0; }
+            td { padding: 0.3mm; }
+            td.wk { font-size: 6pt; width: 5mm; }
+            .d { height: 6.4mm; line-height: 6.4mm; font-size: 8.5pt; border-radius: 1mm; }
+            .d.today { box-shadow: none; }
+            
+            
+            #page2 { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <header>
+            <h1>Ferieplanlegger</h1>
+            <div class="ctl">
+                <select id="fylke" aria-label="Fylke"></select>
+                <select id="kal" aria-label="Skolerute"></select>
+                <div class="tools">
+                    <button class="btn" id="print">Skriv ut / PDF</button>
+                    
+                </div>
+                <div class="year">
+                    <button id="prev" aria-label="Forrige år">‹</button>
+                    <select id="yearSel" aria-label="Velg år"></select>
+                    <button id="next" aria-label="Neste år">›</button>
+                </div>
+            </div>
+        </header>
+        <div class="note" id="fylkeNote"></div>
+
+        <section class="panel" id="top">
+            <div class="print-only" id="printTitle"></div>
+            <div class="persons" id="persons"></div>
+            <div class="addrow"><button class="btn" id="addPerson">+ Legg til person</button></div>
+            <div class="legend" id="legend"></div>
+            <div class="note">Velg en person, og klikk på ukedager for å legge til/fjerne ferie. Helligdager og helg
+                teller ikke mot budsjettet. Alt lagres i adressefeltet – kopier lenken for å dele.</div>
+        </section>
+
+        <details class="panel" id="settings">
+            <summary>Innstillinger for skolerute</summary>
+            <div id="settingsBody"></div>
+        </details>
+
+        <section class="months" id="months"></section>
+
+        <div id="page2">
+            <section class="panel" style="margin-top:12px">
+                <div class="sum" id="summary"></div>
+            </section>
+            
+        </div>
+    </main>
+
+    <script>
+        "use strict";
+
+        const MONTHS = ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"];
+        const DOW = ["Ma", "Ti", "On", "To", "Fr", "Lø", "Sø"];
+        const MS = 86400000;
+        const MAX_PERSONS = 4;
+
+        // [id, navn, vinterferie-uke, høstferie-uke]
+        // Oslo er verifisert mot skoleruta i Lovdata (2024/25–2026/27). Øvrige verdier er veiledende
+        // (ukenummerkalender.no) – kommunene bestemmer selv, så sjekk og overstyr under Innstillinger.
+        const FYLKER = [
+            ["oslo", "Oslo", 8, 40],
+            ["agder", "Agder", 9, 40], ["akershus", "Akershus", 8, 40], ["buskerud", "Buskerud", 8, 40], ["finnmark", "Finnmark", 9, 40],
+            ["innlandet", "Innlandet", 8, 40], ["more", "Møre og Romsdal", 9, 41], ["nordland", "Nordland", 9, 40], ["ostfold", "Østfold", 8, 40],
+            ["rogaland", "Rogaland", 9, 41], ["telemark", "Telemark", 8, 40], ["troms", "Troms", 9, 40], ["trondelag", "Trøndelag", 9, 40],
+            ["vestfold", "Vestfold", 8, 40], ["vestland", "Vestland", 9, 41]
+        ];
+        // Enkeltdager som ikke følger regelen, hentet fra Oslos forskrifter om skoleruta (Lovdata).
+        const EXTRA_DAYS = {
+            oslo: {
+                "2025-05-02": "Inneklemt fridag (barneskole)", "2025-05-30": "Inneklemt fridag (barneskole)",
+                "2025-09-08": "Valgdag",
+                "2027-03-30": "Påskeferie", "2027-05-07": "Inneklemt fridag"
+            }
+        };
+        // Offisielle skoleruter (eksakte datoer) som erstatter regelen innenfor [from, to].
+        // Vestland har 43 kommuner med hver sin skoleerute – kun disse er lagt inn.
+        const BERGEN_SRC = "https://lovdata.no/dokument/LF/forskrift/2025-06-03-980";
+        const CALENDARS = {
+            vestland: [
+                {
+                    id: "bergen", name: "Bergen kommune (grunnskole)", from: "2025-08-01", to: "2028-07-31",
+                    src: [
+                        ["2025/26", "https://lovdata.no/dokument/LTII/forskrift/2024-05-27-3704"],
+                        ["2026/27", BERGEN_SRC], ["endring 2026/27", "https://lovdata.no/dokument/LTII/forskrift/2025-06-23-1333"],
+                        ["2027/28", "https://lovdata.no/dokument/LF/forskrift/2026-06-02-992"]
+                    ],
+                    ranges: [
+                        ["2025-08-01", "2025-08-17", "Sommerferie"], ["2025-09-08", "2025-09-08", "Planleggingsdag"],
+                        ["2025-10-06", "2025-10-10", "Høstferie"], ["2025-11-07", "2025-11-07", "Planleggingsdag"],
+                        ["2025-12-22", "2026-01-04", "Juleferie"], ["2026-01-30", "2026-01-30", "Planleggingsdag"],
+                        ["2026-02-23", "2026-02-27", "Vinterferie"], ["2026-03-30", "2026-04-06", "Påskeferie"],
+                        ["2026-05-15", "2026-05-15", "Planleggingsdag"], ["2026-06-25", "2026-08-13", "Sommerferie"],
+                        ["2026-09-07", "2026-09-07", "Planleggingsdag"], ["2026-10-05", "2026-10-09", "Høstferie"],
+                        ["2026-11-06", "2026-11-06", "Planleggingsdag"], ["2026-12-23", "2026-12-31", "Juleferie"],
+                        ["2027-01-29", "2027-01-29", "Planleggingsdag"], ["2027-03-01", "2027-03-05", "Vinterferie"],
+                        ["2027-03-22", "2027-03-29", "Påskeferie"], ["2027-05-07", "2027-05-07", "Planleggingsdag"],
+                        ["2027-05-28", "2027-05-28", "Planleggingsdag"], ["2027-06-19", "2027-08-15", "Sommerferie"],
+                        ["2027-09-13", "2027-09-13", "Planleggingsdag"], ["2027-10-11", "2027-10-15", "Høstferie"],
+                        ["2027-11-05", "2027-11-05", "Planleggingsdag"], ["2027-12-22", "2027-12-31", "Juleferie"],
+                        ["2028-01-28", "2028-01-28", "Planleggingsdag"], ["2028-02-28", "2028-03-03", "Vinterferie"],
+                        ["2028-04-10", "2028-04-17", "Påskeferie"], ["2028-05-26", "2028-05-26", "Planleggingsdag"],
+                        ["2028-06-21", "2028-07-31", "Sommerferie"]
+                    ]
+                },
+                {
+                    id: "vestland-vgs", name: "Vestland fylkeskommune (videregående)", from: "2026-08-01", to: "2027-07-31",
+                    src: [["2026/27", "https://lovdata.no/dokument/LF/forskrift/2026-08-06-1634"]],
+                    ranges: [
+                        ["2026-08-01", "2026-08-16", "Sommerferie"], ["2026-10-05", "2026-10-09", "Høstferie"],
+                        ["2026-11-06", "2026-11-06", "Elevfri"], ["2026-12-23", "2027-01-03", "Juleferie"],
+                        ["2027-01-29", "2027-01-29", "Elevfri"], ["2027-02-22", "2027-02-26", "Vinterferie"],
+                        ["2027-03-20", "2027-03-29", "Påskeferie"], ["2027-05-07", "2027-05-07", "Elevfri"],
+                        ["2027-05-28", "2027-05-28", "Elevfri"], ["2027-06-19", "2027-07-31", "Sommerferie"]
+                    ]
+                }
+            ]
+        };
+        const calendarsOf = f => CALENDARS[f] || [];
+        const calendarOf = sc => calendarsOf(sc.f).find(c => c.id === sc.k) || null;
+
+        // Standardverdier for regelen (tomt felt i Innstillinger = automatisk)
+        const RULE_DEFAULTS = { se: 18, ss: 16, jd: 20 };
+
+        const pad = n => String(n).padStart(2, "0");
+        const key = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const mk = (y, m, d) => new Date(y, m, d, 12);
+        const addDays = (d, n) => mk(d.getFullYear(), d.getMonth(), d.getDate() + n);
+        const dowMon = d => (d.getDay() + 6) % 7; // 0 = mandag
+        const parseKey = k => { const [y, m, d] = k.split("-").map(Number); return mk(y, m - 1, d); };
+        const isKey = k => typeof k === "string" && /^\d{4}-\d{2}-\d{2}$/.test(k);
+        const clamp = (v, lo, hi, dflt) => { v = Math.round(+v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : dflt; };
+        const optNum = (v, lo, hi) => (v === null || v === undefined || v === "") ? null : clamp(v, lo, hi, null);
+        // første dag fra og med `d` som faller på ukedag `dow` (0 = mandag), eller første ukedag hvis dow er null
+        const nextDow = (d, dow) => { while (dow === null ? dowMon(d) >= 5 : dowMon(d) !== dow) d = addDays(d, 1); return d; };
+
+        function easter(y) {
+            const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+            const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31);
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return mk(y, month - 1, day);
+        }
+
+        function isoWeek(d) {
+            const t = mk(d.getFullYear(), d.getMonth(), d.getDate());
+            t.setDate(t.getDate() + 3 - dowMon(t));
+            const w1 = mk(t.getFullYear(), 0, 4);
+            return 1 + Math.round(((t - w1) / MS - 3 + dowMon(w1)) / 7);
+        }
+
+        function mondayOfWeek(y, w) {
+            const jan4 = mk(y, 0, 4);
+            return addDays(jan4, -dowMon(jan4) + (w - 1) * 7);
+        }
+
+        function publicHolidays(y) {
+            const e = easter(y), h = new Map();
+            const add = (d, name) => h.set(key(d), name);
+            add(mk(y, 0, 1), "Nyttårsdag");
+            add(addDays(e, -7), "Palmesøndag");
+            add(addDays(e, -3), "Skjærtorsdag");
+            add(addDays(e, -2), "Langfredag");
+            add(e, "1. påskedag");
+            add(addDays(e, 1), "2. påskedag");
+            add(mk(y, 4, 1), "Arbeidernes dag");
+            add(mk(y, 4, 17), "Grunnlovsdagen");
+            add(addDays(e, 39), "Kristi himmelfartsdag");
+            add(addDays(e, 49), "1. pinsedag");
+            add(addDays(e, 50), "2. pinsedag");
+            add(mk(y, 11, 25), "1. juledag");
+            add(mk(y, 11, 26), "2. juledag");
+            return h;
+        }
+
+        const fylkeOf = sc => FYLKER.find(f => f[0] === sc.f) || FYLKER[0];
+        // gjeldende verdier = overstyring hvis satt, ellers automatisk
+        function autoParams(sc) {
+            const f = fylkeOf(sc);
+            return { w: f[2], h: f[3], ...RULE_DEFAULTS };
+        }
+        const effParams = sc => ({ ...autoParams(sc), ...Object.fromEntries(Object.entries(sc.o).filter(([, v]) => v !== null)) });
+
+        /*
+         * Skolefri-algoritme (utledet fra Oslos skolerute 2024/25–2026/27, alle treff):
+         *  - Vinterferie: ISO-uke 8.  Høstferie: ISO-uke 40.
+         *  - Påskeferie: mandag i stille uke t.o.m. 2. påskedag.
+         *  - Sommer: siste skoledag = første fredag fra 18. juni; første skoledag = første mandag fra 16. august.
+         *  - Jul: starter første ukedag fra 20. des.; skolen starter igjen første ukedag fra 2. jan.,
+         *    men påfølgende mandag hvis 2. jan. er en fredag.
+         * Enkeltdager utenom regelen ligger i EXTRA_DAYS; egne datoer legges inn av brukeren.
+         */
+        function schoolHolidays(y, sc) {
+            const p = effParams(sc), s = new Map();
+            const range = (a, b, name) => { for (let d = a, n = 0; d <= b && n < 400; d = addDays(d, 1), n++) if (!s.has(key(d))) s.set(key(d), name); };
+            const week = (w, name) => { const m = mondayOfWeek(y, w); range(m, addDays(m, 4), name); };
+
+            const jan2 = nextDow(mk(y, 0, 2), null);
+            const resume = dowMon(jan2) === 4 ? addDays(jan2, 3) : jan2;
+            range(mk(y, 0, 1), addDays(resume, -1), "Juleferie");
+            range(nextDow(mk(y, 11, p.jd), null), mk(y, 11, 31), "Juleferie");
+            week(p.w, "Vinterferie");
+            const e = easter(y);
+            range(addDays(e, -6), addDays(e, 1), "Påskeferie");
+            week(p.h, "Høstferie");
+            const lastDay = nextDow(mk(y, 5, p.se), 4), firstDay = nextDow(mk(y, 7, p.ss), 0);
+            range(addDays(lastDay, 1), addDays(firstDay, -1), "Sommerferie");
+
+            const cal = calendarOf(sc);
+            if (cal) {
+                // offisiell skolerute erstatter regelen innenfor sitt datovindu
+                for (const k of [...s.keys()]) if (k >= cal.from && k <= cal.to) s.delete(k);
+                for (const [a, b, n] of cal.ranges) {
+                    if (b < y + "-01-01" || a > y + "-12-31") continue;
+                    for (let d = parseKey(a), i = 0; key(d) <= b && i < 400; d = addDays(d, 1), i++) if (d.getFullYear() === y) s.set(key(d), n);
+                }
+            } else {
+                for (const [k, n] of Object.entries(EXTRA_DAYS[sc.f] || {})) if (k.startsWith(y + "-")) s.set(k, n);
+            }
+            for (const c of sc.c) for (let d = parseKey(c.f), i = 0; key(d) <= c.t && i < 400; d = addDays(d, 1), i++) if (d.getFullYear() === y) s.set(key(d), c.n || "Skolefri");
+            return s;
+        }
+
+        // ---------- state ----------
+        const STORE = "ferie-v2";
+        const defaults = () => ({
+            year: new Date().getFullYear(),
+            active: 0,  school: { f: "oslo", k: "", o: { w: null, h: null, se: null, ss: null, jd: null }, c: [] },
+            persons: [{ name: "Person 1", budget: 25 }, { name: "Person 2", budget: 25 }],
+            days: {} // år -> { "YYYY-MM-DD": bitmaske (bit i = person i) }
+        });
+        let state = defaults();
+
+        function sanitize(raw) {
+            const st = defaults();
+            if (!raw || typeof raw !== "object") return st;
+            st.year = clamp(raw.year, 1900, 2200, st.year);
+            if (Array.isArray(raw.persons)) {
+                const ps = raw.persons.slice(0, MAX_PERSONS).map((p, i) => ({
+                    name: String((p && p.name) || `Person ${i + 1}`).slice(0, 40),
+                    budget: clamp(p && p.budget, 0, 366, 25)
+                }));
+                if (ps.length) st.persons = ps;
+            }
+             st.active = clamp(raw.active, 0, st.persons.length - 1, 0);
+            const sc = raw.school || {}, o = sc.o || {};
+            const fy = FYLKER.some(f => f[0] === sc.f) ? sc.f : "oslo";
+            st.school = {
+                f: fy,
+                k: calendarsOf(fy).some(c => c.id === sc.k) ? sc.k : "",
+                o: { w: optNum(o.w, 1, 53), h: optNum(o.h, 1, 53), se: optNum(o.se, 1, 30), ss: optNum(o.ss, 1, 31), jd: optNum(o.jd, 1, 31) },
+                c: (Array.isArray(sc.c) ? sc.c : []).filter(c => c && isKey(c.f) && isKey(c.t) && c.f <= c.t).slice(0, 50)
+                    .map(c => ({ f: c.f, t: c.t, n: String(c.n || "").slice(0, 40) }))
+            };
+            const full = (1 << st.persons.length) - 1;
+            if (raw.days && typeof raw.days === "object") {
+                for (const [yr, days] of Object.entries(raw.days)) {
+                    if (!days || typeof days !== "object") continue;
+                    for (const [k, v] of Object.entries(days)) {
+                        const m = (+v || 0) & full;
+                        if (isKey(k) && m) (st.days[yr] ||= {})[k] = m;
+                    }
+                }
+            }
+            return st;
+        }
+
+        try { state = sanitize(JSON.parse(localStorage.getItem(STORE) || "null")); } catch { state = defaults(); }
+
+        // ---------- lagring i adressefeltet: ?s=<base64url(JSON)> ----------
+        const ymd = k => k.replace(/-/g, "");
+
+        function encodeDays(bit) {
+            const ks = [];
+            for (const yr of Object.values(state.days)) for (const [k, v] of Object.entries(yr)) if (v & bit) ks.push(k);
+            ks.sort();
+            const out = [];
+            let start = null, prev = null;
+            const flush = () => { if (start) out.push(start === prev ? ymd(start) : `${ymd(start)}-${ymd(prev)}`); };
+            for (const k of ks) {
+                if (prev && key(addDays(parseKey(prev), 1)) === k) prev = k;
+                else { flush(); start = prev = k; }
+            }
+            flush();
+            return out.join(",");
+        }
+
+        function decodeDays(str, bit, days) {
+            for (const part of String(str).split(",").filter(Boolean)) {
+                const [a, b = a] = part.split("-");
+                if (!/^\d{8}$/.test(a) || !/^\d{8}$/.test(b)) continue;
+                const p = s => mk(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8));
+                for (let d = p(a), n = 0; d <= p(b) && n < 800; d = addDays(d, 1), n++) {
+                    const k = key(d), yr = (days[d.getFullYear()] ||= {});
+                    yr[k] = (yr[k] || 0) | bit;
+                }
+            }
+        }
+
+        const b64enc = str => btoa(String.fromCharCode(...new TextEncoder().encode(str))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        const b64dec = s => {
+            s = s.replace(/-/g, "+").replace(/_/g, "/");
+            return new TextDecoder().decode(Uint8Array.from(atob(s + "=".repeat((4 - s.length % 4) % 4)), c => c.charCodeAt(0)));
+        };
+
+        function packState() {
+            const sc = state.school, o = sc.o;
+            return b64enc(JSON.stringify({
+                y: state.year,
+                a: state.active, 
+                f: sc.f,
+                k: sc.k,
+                o: [o.w, o.h, o.se, o.ss, o.jd],
+                c: sc.c.map(c => [c.f, c.t, c.n]),
+                p: state.persons.map((p, i) => [p.name, p.budget, encodeDays(1 << i)])
+            }));
+        }
+
+        function applyPacked(s) {
+            try {
+                const o = JSON.parse(b64dec(s));
+                const st = defaults();
+                st.year = o.y;
+                st.active = o.a; 
+                const [w, h, se, ss, jd] = o.o || [];
+                st.school = { f: o.f, k: o.k, o: { w, h, se, ss, jd }, c: (o.c || []).map(([f, t, n]) => ({ f, t, n })) };
+                st.persons = (o.p || []).slice(0, MAX_PERSONS).map(([name, budget]) => ({ name, budget }));
+                (o.p || []).slice(0, MAX_PERSONS).forEach((p, i) => decodeDays(p[2] || "", 1 << i, st.days));
+                state = sanitize(st);
+            } catch { /* ugyldig lenke: bruk lagret tilstand */ }
+        }
+
+        function loadFromUrl() {
+            const s = new URLSearchParams(location.search).get("s");
+            if (s) applyPacked(s);
+        }
+
+        const shareUrl = () => `${location.href.split(/[?#]/)[0]}?s=${packState()}`;
+        function syncUrl() { try { history.replaceState(null, "", "?s=" + packState()); } catch { } }
+        const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch { } syncUrl(); };
+        loadFromUrl();
+
+        // ---------- helpers ----------
+        let PH, SH;
+        const daysOf = () => (state.days[state.year] ||= {});
+        const fullMask = () => (1 << state.persons.length) - 1;
+        const countable = (k, d) => dowMon(d) < 5 && !PH.has(k);
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+        const fmt = d => `${d.getDate()}. ${MONTHS[d.getMonth()].slice(0, 3)}`;
+
+        function usedCount(p) {
+            let n = 0;
+            for (const [k, v] of Object.entries(daysOf())) if (v & (1 << p) && countable(k, parseKey(k))) n++;
+            return n;
+        }
+
+        // ---------- render ----------
+        function renderTop() {
+            const sel = $("yearSel"), cur = new Date().getFullYear();
+            sel.innerHTML = "";
+            for (let y = cur - 2; y <= cur + 6; y++) sel.add(new Option(y, y));
+            if (![...sel.options].some(o => +o.value === state.year)) sel.add(new Option(state.year, state.year));
+            sel.value = state.year;
+            $("fylke").innerHTML = FYLKER.map(f => `<option value="${f[0]}" ${f[0] === state.school.f ? "selected" : ""}>${f[1]}</option>`).join("");
+            const cals = calendarsOf(state.school.f), kal = $("kal");
+            kal.hidden = !cals.length;
+            kal.innerHTML = cals.length
+                ? `<option value="">Beregnet (regel)</option>` + cals.map(c => `<option value="${c.id}" ${c.id === state.school.k ? "selected" : ""}>${esc(c.name)}</option>`).join("")
+                : "";
+            const cal = calendarOf(state.school), n = $("fylkeNote");
+            if (cal) {
+                const ys = `${cal.from.slice(0, 4)}–${cal.to.slice(0, 4)}`;
+                n.className = "note";
+                n.innerHTML = `Offisielle datoer for skoleåret ${ys} (${cal.src.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(", ")}); andre år er beregnet. `
+                    + (state.school.f === "vestland" ? "Vestland har mange kommuner med egne skoleruter – legg inn avvik under Innstillinger." : "");
+            } else if (state.school.f === "oslo") {
+                n.className = "note";
+                n.textContent = "Oslo: beregnet etter Oslo kommunes skoleruter (Lovdata) for 2024/25–2026/27; øvrige år følger samme regel.";
+            } else {
+                n.className = "note warn";
+                n.textContent = "Veiledende datoer – kommunene fastsetter skoleruta selv. Sjekk kommunens skolerute og juster under Innstillinger.";
+            }
+        }
+
+        function renderPersons() {
+            const n = state.persons.length;
+            $("persons").innerHTML = state.persons.map((p, i) => {
+                const used = usedCount(i), left = p.budget - used;
+                const pct = Math.min(100, p.budget ? used / p.budget * 100 : 0);
+                return `<div class="person ${state.active === i ? "active" : ""}" data-i="${i}" style="--c:var(--p${i + 1})">
+      <div class="row"><span class="dot"></span>
+        <input type="text" data-f="name" data-i="${i}" value="${esc(p.name)}" aria-label="Navn">
+        <input type="number" min="0" max="366" data-f="budget" data-i="${i}" value="${p.budget}" aria-label="Feriedager i budsjett" title="Budsjett (dager)">
+        ${n > 1 ? `<button class="rm" data-rm="${i}" title="Fjern person" aria-label="Fjern ${esc(p.name)}">×</button>` : ""}
+      </div>
+      <div class="bar ${left < 0 ? "over" : ""}"><i style="width:${pct}%"></i></div>
+      <div class="stat"><span>Brukt <b>${used}</b> av ${p.budget}</span><span>${left >= 0 ? `Igjen <b>${left}</b>` : `Over med <b>${-left}</b>`}</span></div>
+    </div>`;
+            }).join("");
+            $("addPerson").hidden = n >= MAX_PERSONS;
+            $("legend").innerHTML =
+                `<span style="--k:var(--holiday)">Helligdag</span>
+     <span style="--k:var(--school)">Skolefri</span>
+     <span style="--k:var(--hs)">Helligdag i skoleferie</span>
+     <span style="--k:var(--weekend)">Helg</span>
+     <span class="dotk" style="--k:#22c55e">Alle fri</span>` +
+                state.persons.map((p, i) => `<span style="--k:var(--p${i + 1})">${esc(p.name)}</span>`).join("");
+        }
+
+        function personBg(v) {
+            const idx = [];
+            state.persons.forEach((_, i) => { if (v & (1 << i)) idx.push(i); });
+            if (idx.length === 1) return `background:var(--p${idx[0] + 1})`;
+            const step = 100 / idx.length;
+            return "background:linear-gradient(135deg," + idx.map((i, j) => `var(--p${i + 1}) ${j * step}% ${(j + 1) * step}%`).join(",") + ")";
+        }
+
+        function renderMonths() {
+            const y = state.year, marks = daysOf(), today = key(new Date()), full = fullMask();
+            let html = "";
+            for (let m = 0; m < 12; m++) {
+                const first = mk(y, m, 1), n = new Date(y, m + 1, 0).getDate();
+                let rows = "", cells = "";
+                const lead = dowMon(first);
+                cells += `<td class="wk">${isoWeek(first)}</td>`;
+                for (let i = 0; i < lead; i++) cells += "<td></td>";
+                let col = lead;
+                for (let d = 1; d <= n; d++) {
+                    const dt = mk(y, m, d), k = key(dt), we = col >= 5;
+                    const hol = PH.get(k), sch = SH.get(k), v = marks[k] || 0;
+                    const cls = ["d"];
+                    if (we) cls.push("we");
+                    if (sch && !we) cls.push("school");
+                    if (hol) cls.push("hol");
+                    if (hol && sch) cls.push("hs");
+                    if (v) cls.push("pm");
+                    if (hol || v === full) cls.push("allfree");
+                    if (k === today) cls.push("today");
+                    if (!we && !hol) cls.push("free");
+                    const who = state.persons.filter((_, i) => v & (1 << i)).map(p => p.name).join(", ");
+                    const tip = [hol, sch, who].filter(Boolean).join(" · ");
+                    cells += `<td><div class="${cls.join(" ")}" data-k="${k}" ${v ? `style="${personBg(v)}"` : ""} ${tip ? `title="${esc(tip)}"` : ""}>${d}</div></td>`;
+                    col++;
+                    if (col === 7 && d < n) { rows += `<tr>${cells}</tr>`; cells = `<td class="wk">${isoWeek(addDays(dt, 1))}</td>`; col = 0; }
+                }
+                if (cells) { for (; col < 7; col++) cells += "<td></td>"; rows += `<tr>${cells}</tr>`; }
+                html += `<div class="panel month"><h3>${MONTHS[m]}</h3><table><thead><tr><th></th>${DOW.map(d => `<th>${d}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
+            }
+            $("months").innerHTML = html;
+        }
+
+        // sammenhengende perioder der `mask` er fri; helg/helligdager i mellom bindes sammen
+        function periods(mask) {
+            const marks = daysOf();
+            const ks = Object.keys(marks).filter(k => (marks[k] & mask) === mask).sort();
+            const out = [];
+            let cur = null;
+            for (const k of ks) {
+                const dt = parseKey(k);
+                if (!countable(k, dt)) continue;
+                let extend = false;
+                if (cur) {
+                    extend = true;
+                    for (let x = addDays(cur.last, 1); x < dt; x = addDays(x, 1)) {
+                        if (countable(key(x), x)) { extend = false; break; }
+                    }
+                }
+                if (extend) { cur.last = dt; cur.n++; } else { cur = { first: dt, last: dt, n: 1 }; out.push(cur); }
+            }
+            return out;
+        }
+
+        const fmtRange = p => p.first.getTime() === p.last.getTime() ? fmt(p.first) : `${fmt(p.first)} – ${fmt(p.last)}`;
+        const periodList = ps => ps.length
+            ? ps.map(p => `<li><b>${fmtRange(p)}</b> · ${p.n} dag${p.n === 1 ? "" : "er"}</li>`).join("")
+            : "<li>Ingen valgt</li>";
+
+        function renderSummary() {
+            const cols = state.persons.map((p, i) =>
+                `<div><h4 style="color:var(--p${i + 1})">${esc(p.name)} <span class="pstat">· brukt ${usedCount(i)} av ${p.budget}</span></h4><ul>${periodList(periods(1 << i))}</ul></div>`).join("");
+            let together = "";
+            if (state.persons.length > 1) {
+                const tog = periods(fullMask());
+                const total = tog.reduce((a, p) => a + p.n, 0);
+                together = `<div><h4>Alle fri samtidig</h4><ul>${tog.length ? periodList(tog) : "<li>Ingen felles</li>"}<li style="margin-top:6px">Totalt: <b>${total}</b> dager</li></ul></div>`;
+            }
+            $("summary").innerHTML = cols + together +
+                `<div class="noprint"><button class="link" id="share">Kopier delingslenke</button><br><button class="link" id="clear">Nullstill ${state.year}</button></div>`;
+            $("share").onclick = async e => {
+                const url = shareUrl(), b = e.target;
+                try { await navigator.clipboard.writeText(url); b.textContent = "Kopiert!"; }
+                catch { prompt("Kopier lenken:", url); }
+                setTimeout(() => b.textContent = "Kopier delingslenke", 1500);
+            };
+            $("clear").onclick = () => { if (confirm(`Fjerne alle valgte feriedager for ${state.year}?`)) { delete state.days[state.year]; save(); render(); } };
+        }
+
+        // beregnede skoleferier i valgt år, gruppert
+        function calcList() {
+            const out = [];
+            let cur = null;
+            for (let d = mk(state.year, 0, 1); d.getFullYear() === state.year; d = addDays(d, 1)) {
+                const n = SH.get(key(d));
+                if (n && cur && cur.n === n && key(addDays(cur.last, 1)) === key(d)) cur.last = d;
+                else if (n) { cur = { n, first: d, last: d }; out.push(cur); }
+                else cur = null;
+            }
+            return out;
+        }
+
+        function renderSettings() {
+            const sc = state.school, auto = autoParams(sc);
+            const num = (k, label, lo, hi) =>
+                `<label>${label}<input type="number" min="${lo}" max="${hi}" data-sk="${k}" value="${sc.o[k] ?? ""}" placeholder="auto: ${auto[k]}"></label>`;
+            const calc = calcList().map(p => `<li><b>${p.n}</b> ${p.first.getTime() === p.last.getTime() ? fmt(p.first) : `${fmt(p.first)} – ${fmt(p.last)}`}</li>`).join("");
+            $("settingsBody").innerHTML = `
+    <div class="set">
+      ${num("w", "Vinterferie (ukenr.)", 1, 53)}
+      ${num("h", "Høstferie (ukenr.)", 1, 53)}
+      ${num("se", "Siste skoledag: første fredag fra og med (dato i juni)", 1, 30)}
+      ${num("ss", "Første skoledag: første mandag fra og med (dato i august)", 1, 31)}
+      ${num("jd", "Juleferie: første ukedag fra og med (dato i desember)", 1, 31)}
+    </div>
+    <div class="note">Tomme felt bruker automatisk verdi. <button class="link" id="resetO">Nullstill alle til automatisk</button></div>
+    <div class="calc"><b>Beregnet for ${state.year}</b> <ul>${calc}</ul></div>
+    <div class="custom"><b>Egne skolefridager</b> (planleggingsdager, lokale avvik)
+      <ul>${sc.c.map((c, i) => `<li>${esc(c.n || "Skolefri")}: ${c.f} – ${c.t} <button class="link" data-rmc="${i}">fjern</button></li>`).join("")}</ul>
+      <form id="customForm" class="set" style="margin:0">
+        <input type="text" name="n" placeholder="Navn (valgfritt)" maxlength="40">
+        <input type="date" name="f" required aria-label="Fra dato">
+        <input type="date" name="t" aria-label="Til dato (valgfri)">
+        <button class="btn" type="submit">Legg til</button>
+      </form>
+    </div>`;
+        }
+
+        function renderPrint() {
+            const sc = state.school, cal = calendarOf(sc), fy = fylkeOf(sc)[1];
+            $("printTitle").textContent = `Feriekalender ${state.year} – ${cal ? cal.name : fy}`;
+            
+            
+        }
+
+        function render() {
+            PH = publicHolidays(state.year);
+            SH = schoolHolidays(state.year, state.school);
+            renderTop(); renderPersons(); renderMonths(); renderSummary(); renderSettings(); renderPrint();
+        }
+
+        // ---------- events ----------
+        $("months").addEventListener("click", e => {
+            const t = e.target.closest(".d.free");
+            if (!t) return;
+            const marks = daysOf(), k = t.dataset.k;
+            const v = (marks[k] || 0) ^ (1 << state.active);
+            if (v) marks[k] = v; else delete marks[k];
+            save(); render();
+        });
+
+        function setActive(i) {
+            if (state.active === i) return;
+            state.active = i;
+            save();
+            document.querySelectorAll(".person").forEach((n, j) => n.classList.toggle("active", j === i));
+        }
+        $("persons").addEventListener("click", e => {
+            const rm = e.target.closest("[data-rm]");
+            if (rm) { removePerson(+rm.dataset.rm); return; }
+            const p = e.target.closest(".person");
+            if (p) setActive(+p.dataset.i);
+        });
+        $("persons").addEventListener("focusin", e => {
+            const p = e.target.closest(".person");
+            if (p && e.target.matches("input")) setActive(+p.dataset.i);
+        });
+        $("persons").addEventListener("change", e => {
+            const t = e.target, i = +t.dataset.i;
+            if (t.dataset.f === "name") state.persons[i].name = t.value.trim().slice(0, 40) || `Person ${i + 1}`;
+            if (t.dataset.f === "budget") state.persons[i].budget = clamp(t.value, 0, 366, 0);
+            save(); render();
+        });
+
+        $("addPerson").onclick = () => {
+            if (state.persons.length >= MAX_PERSONS) return;
+            state.persons.push({ name: `Person ${state.persons.length + 1}`, budget: 25 });
+            state.active = state.persons.length - 1;
+            save(); render();
+        };
+
+        function removePerson(i) {
+            if (state.persons.length <= 1) return;
+            const hasDays = Object.values(state.days).some(yr => Object.values(yr).some(v => v & (1 << i)));
+            if (hasDays && !confirm(`Fjerne ${state.persons[i].name} og alle feriedagene?`)) return;
+            state.persons.splice(i, 1);
+            const low = (1 << i) - 1;
+            for (const yr of Object.values(state.days)) {
+                for (const [k, v] of Object.entries(yr)) {
+                    const nv = (v & low) | ((v >> (i + 1)) << i);
+                    if (nv) yr[k] = nv; else delete yr[k];
+                }
+            }
+            state.active = Math.min(state.active > i ? state.active - 1 : state.active, state.persons.length - 1);
+            save(); render();
+        }
+
+        $("fylke").onchange = e => {
+            state.school.f = e.target.value;
+            state.school.k = (calendarsOf(state.school.f)[0] || {}).id || "";
+            save(); render();
+        };
+        $("kal").onchange = e => { state.school.k = e.target.value; save(); render(); };
+
+        $("settingsBody").addEventListener("change", e => {
+            const k = e.target.dataset.sk;
+            if (!k) return;
+            const lim = { w: [1, 53], h: [1, 53], se: [1, 30], ss: [1, 31], jd: [1, 31] }[k];
+            state.school.o[k] = optNum(e.target.value, lim[0], lim[1]);
+            save(); render();
+        });
+        $("settingsBody").addEventListener("click", e => {
+            if (e.target.id === "resetO") {
+                state.school.o = { w: null, h: null, se: null, ss: null, jd: null };
+                save(); render(); return;
+            }
+            const i = e.target.dataset.rmc;
+            if (i === undefined) return;
+            state.school.c.splice(+i, 1);
+            save(); render();
+        });
+        $("settingsBody").addEventListener("submit", e => {
+            e.preventDefault();
+            const f = new FormData(e.target), from = f.get("f"), to = f.get("t") || from;
+            if (!isKey(from) || !isKey(to) || to < from) return;
+            state.school.c.push({ n: String(f.get("n") || "").trim().slice(0, 40), f: from, t: to });
+            save(); render();
+        });
+
+        
+        $("print").onclick = () => window.print();
+
+        const setYear = y => { state.year = y; save(); render(); };
+        $("prev").onclick = () => setYear(state.year - 1);
+        $("next").onclick = () => setYear(state.year + 1);
+        $("yearSel").onchange = e => setYear(+e.target.value);
+
+        syncUrl();
+        render();
+    </script>
+</body>
+
+</html>
